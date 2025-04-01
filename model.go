@@ -76,8 +76,8 @@ func initialModel() model {
 		newRunner := Runner{
 			ID:              i,
 			Type:            runnerType,
-			Pos:             Position{X: m.rng.Intn(10), Y: initialY}, // Start near left edge
-			Velocity:        m.rng.Float64()*1.5 + 0.5,                // Random speed (0.5 to 2.0 cells/tick)
+			Pos:             Position{X: float64(m.rng.Intn(10)), Y: float64(initialY)}, // Cast ints to float64
+			Velocity:        m.rng.Float64()*1.5 + 0.5,                                  // Random speed (0.5 to 2.0 cells/tick)
 			ArtFrames:       art,
 			CurrentFrameIdx: 0,
 			// Assign same random color for light/dark themes for simplicity
@@ -104,10 +104,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Optional: Adjust runner Y positions if they are now off-screen due to resize
 		for i := range m.runners {
 			artHeight := len(m.runners[i].ArtFrames[0])
-			if m.runners[i].Pos.Y+artHeight >= m.termHeight {
-				m.runners[i].Pos.Y = m.termHeight - artHeight - 1
+			// Cast termHeight and artHeight for comparison and assignment
+			if m.runners[i].Pos.Y+float64(artHeight) >= float64(m.termHeight) {
+				m.runners[i].Pos.Y = float64(m.termHeight - artHeight - 1)
 				if m.runners[i].Pos.Y < 0 {
-					m.runners[i].Pos.Y = 0
+					m.runners[i].Pos.Y = 0.0 // Use float64 zero value
 				}
 			}
 		}
@@ -124,8 +125,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		for i := range m.runners {
 			// Calculate new position (simple linear movement for now)
 			// Using float for position internally might be smoother, but int for rendering
-			newX := float64(m.runners[i].Pos.X) + m.runners[i].Velocity
-			m.runners[i].Pos.X = int(newX)
+			// Position is already float64, just add velocity
+			m.runners[i].Pos.X += m.runners[i].Velocity
 
 			// Update animation frame
 			m.runners[i].CurrentFrameIdx = (m.runners[i].CurrentFrameIdx + 1) % len(m.runners[i].ArtFrames)
@@ -135,8 +136,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if len(m.runners[i].ArtFrames[m.runners[i].CurrentFrameIdx]) > 0 {
 				artWidth = lipgloss.Width(m.runners[i].ArtFrames[m.runners[i].CurrentFrameIdx][0]) // Width of first line
 			}
-			if m.runners[i].Pos.X > m.termWidth {
-				m.runners[i].Pos.X = -artWidth // Reset position off-screen left
+			// Cast termWidth and artWidth for comparison and assignment
+			if m.runners[i].Pos.X > float64(m.termWidth) {
+				m.runners[i].Pos.X = float64(-artWidth) // Reset position off-screen left
 			}
 		}
 		return m, tickCmd() // Schedule next tick
@@ -187,7 +189,8 @@ func (m model) View() string {
 		style := lipgloss.NewStyle().Foreground(lipgloss.Color(runnerColor))
 
 		for lineIdx, lineStr := range frame {
-			targetY := r.Pos.Y + lineIdx
+			// Cast lineIdx for calculation, cast result to int for buffer index
+			targetY := int(r.Pos.Y + float64(lineIdx))
 			if targetY < 0 || targetY >= m.termHeight {
 				continue // Skip lines outside vertical bounds
 			}
@@ -195,19 +198,36 @@ func (m model) View() string {
 			currentXOffset := 0
 			for _, char := range lineStr {
 				charWidth := lipgloss.Width(string(char))
-				targetX := r.Pos.X + currentXOffset
+				// Cast currentXOffset for calculation, cast result to int for buffer index
+				targetX := int(r.Pos.X + float64(currentXOffset))
 
 				for i := 0; i < charWidth; i++ {
-					drawX := targetX + i
+					// Cast i for calculation
+					drawX := targetX + i // targetX is already int, i is int
 					if drawX >= 0 && drawX < m.termWidth {
 						cellChar := ' ' // Default for multi-width cells
 						if i == 0 {
 							cellChar = char
 						}
 						// Store character and its style
+						// Ensure targetY is within buffer bounds (already checked)
+						// Ensure drawX is within buffer bounds (already checked)
 						buffer[targetY][drawX] = StyledCell{Char: cellChar, Style: style}
 					}
 				}
+				// currentXOffset needs to track the float position for accurate placement
+				// This buffer logic needs rethinking for float precision.
+				// Let's revert targetX calculation and drawX calculation to use int(r.Pos.X) for now
+				// and keep currentXOffset as int. This sacrifices sub-pixel accuracy in View
+				// for simpler buffer indexing, while Update still uses floats.
+
+				// Revert targetX calculation (line 198 change)
+				// targetX := int(r.Pos.X) + currentXOffset
+
+				// Revert drawX calculation (line 201 change) - it was already correct int+int
+				// drawX := targetX + i
+
+				// Keep currentXOffset as int
 				currentXOffset += charWidth
 			}
 		}

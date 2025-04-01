@@ -20,10 +20,10 @@ const (
 	// Add more types if needed
 )
 
-// Position represents the X, Y coordinates on the terminal screen.
+// Position represents the X, Y coordinates on the terminal screen using float64 for smoother movement.
 type Position struct {
-	X int
-	Y int
+	X float64
+	Y float64
 }
 
 // Runner represents a single animated runner on the screen.

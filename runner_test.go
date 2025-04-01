@@ -16,8 +16,8 @@ func newTestRunner(x, y int, velocity float64, art [][]string) *Runner {
 	}
 	return &Runner{
 		ID:              1,
-		Type:            Jogger, // Arbitrary type for testing
-		Pos:             Position{X: x, Y: y},
+		Type:            Jogger,                                 // Arbitrary type for testing
+		Pos:             Position{X: float64(x), Y: float64(y)}, // Cast to float64
 		Velocity:        velocity,
 		ArtFrames:       art,
 		CurrentFrameIdx: 0,
@@ -31,37 +31,37 @@ func TestUpdatePosition(t *testing.T) {
 		name         string
 		runner       *Runner
 		termWidth    int
-		expectedPosX int
+		expectedPosX float64 // Change expected type to float64
 	}{
 		{
 			name:         "Move right within bounds",
 			runner:       newTestRunner(10, 5, 2.0, [][]string{{"art"}}),
 			termWidth:    80,
-			expectedPosX: 12, // 10 + 2.0
+			expectedPosX: 12.0, // 10 + 2.0
 		},
 		{
 			name:         "Move right with fractional velocity",
 			runner:       newTestRunner(10, 5, 1.5, [][]string{{"art"}}),
 			termWidth:    80,
-			expectedPosX: 11, // int(10 + 1.5)
+			expectedPosX: 11.5, // 10 + 1.5
 		},
 		{
 			name:         "Wrap around screen edge",
 			runner:       newTestRunner(78, 5, 3.0, [][]string{{"abc"}}), // Art width 3
 			termWidth:    80,
-			expectedPosX: -3, // 78 + 3 = 81 > 80, wraps to -artWidth
+			expectedPosX: -3.0, // 78 + 3 = 81 > 80, wraps to float64(-artWidth)
 		},
 		{
 			name:         "Start off screen left, move right",
 			runner:       newTestRunner(-5, 5, 2.0, [][]string{{"art"}}),
 			termWidth:    80,
-			expectedPosX: -3, // -5 + 2.0
+			expectedPosX: -3.0, // -5 + 2.0
 		},
 		{
 			name:         "Nil runner",
 			runner:       nil,
 			termWidth:    80,
-			expectedPosX: 0, // Expect no change/panic, function should handle nil
+			expectedPosX: 0.0, // Use float64 zero value
 		},
 	}
 
@@ -74,6 +74,8 @@ func TestUpdatePosition(t *testing.T) {
 			} else {
 				originalY := tt.runner.Pos.Y // updatePosition shouldn't change Y
 				updatePosition(tt.runner, tt.termWidth)
+				// Compare float64 values. For simple cases, direct comparison is often okay.
+				// For more complex calculations, consider using a tolerance (e.g., math.Abs(a-b) < epsilon).
 				if tt.runner.Pos.X != tt.expectedPosX {
 					t.Errorf("updatePosition() Pos.X = %v, want %v", tt.runner.Pos.X, tt.expectedPosX)
 				}

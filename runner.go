@@ -12,8 +12,8 @@ func updatePosition(runner *Runner, termWidth int) {
 	}
 
 	// Calculate new X position based on velocity
-	newX := float64(runner.Pos.X) + runner.Velocity
-	runner.Pos.X = int(newX)
+	// Position is already float64, just add velocity
+	runner.Pos.X += runner.Velocity
 
 	// Boundary check (wrap around screen width)
 	artWidth := 0
@@ -25,8 +25,9 @@ func updatePosition(runner *Runner, termWidth int) {
 		artWidth = 1
 	}
 
-	if runner.Pos.X > termWidth {
-		runner.Pos.X = -artWidth // Reset position off-screen left
+	// Cast termWidth and artWidth for comparison and assignment
+	if runner.Pos.X > float64(termWidth) {
+		runner.Pos.X = float64(-artWidth) // Reset position off-screen left
 	}
 }
 
