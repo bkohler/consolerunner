@@ -1,0 +1,12 @@
+schemaVersion: 2.0.0
+metadata:
+  name: go-project
+components:
+  - name: dev
+    container:
+      image: public.ecr.aws/aws-mde/universal-image:latest
+commands:
+  - id: build-and-test
+    exec:
+      component: dev
+      commandLine: "go build && go test ./..."
