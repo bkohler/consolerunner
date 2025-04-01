@@ -59,11 +59,32 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # Add any setup steps before running the `github/codeql-action/init` action.
-    # This includes steps like installing compilers or runtimes (`actions/setup-node`
-    # or others). This is typically only required for manual builds.
-    # - name: Setup runtime (example)
-    #   uses: actions/setup-example@v1
+    # Set up Go environment - needed for caching and building
+    - name: Set up Go
+      if: matrix.language == 'go' # Only run this step for the Go job
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: 'go.mod' # Use version from go.mod
+
+    # Cache Go modules - speeds up dependency downloads
+    - name: Cache Go modules
+      if: matrix.language == 'go' # Only run this step for the Go job
+      uses: actions/cache@v4
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-mod-
+
+    # Cache Go build cache - speeds up compilation
+    - name: Cache Go build cache
+      if: matrix.language == 'go' # Only run this step for the Go job
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/go-build
+        key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-build-
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
