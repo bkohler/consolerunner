@@ -30,10 +30,11 @@ A fun Go application that displays various types of runners animating across you
     *   Install `goimports` if needed: `go install golang.org/x/tools/cmd/goimports@latest`
     *   Install `golangci-lint` if needed (e.g., using `mise`): `mise use golangci-lint@latest`
 
-3.  **Build the application:**
+3.  **Build the application (explicitly naming the output):**
     ```bash
-    go build
+    go build -o consolerunner .
     ```
+    *(This ensures the executable is named `consolerunner`)*
 
 4.  **Run the executable:**
     ```bash
