@@ -31,7 +31,8 @@ type Runner struct {
 	ID              int
 	Type            RunnerType
 	Pos             Position
-	Velocity        float64    // Cells per tick (can be fractional for smoother perceived movement)
+	VelocityX       float64    // Horizontal speed (cells per tick)
+	VelocityY       float64    // Vertical speed (cells per tick)
 	ArtFrames       [][]string // Each inner slice is a frame, each string is a line of the frame
 	CurrentFrameIdx int
 	Color           lipgloss.AdaptiveColor // Use AdaptiveColor for better theme support

@@ -18,7 +18,8 @@ func newTestRunner(x, y int, velocity float64, art [][]string) *Runner {
 		ID:              1,
 		Type:            Jogger,                                 // Arbitrary type for testing
 		Pos:             Position{X: float64(x), Y: float64(y)}, // Cast to float64
-		Velocity:        velocity,
+		VelocityX:       velocity,                               // Use VelocityX
+		VelocityY:       0.0,                                    // No vertical movement in tests for simplicity
 		ArtFrames:       art,
 		CurrentFrameIdx: 0,
 		Color:           lipgloss.AdaptiveColor{Light: "1", Dark: "1"},

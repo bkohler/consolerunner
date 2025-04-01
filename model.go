@@ -77,7 +77,8 @@ func initialModel() model {
 			ID:              i,
 			Type:            runnerType,
 			Pos:             Position{X: float64(m.rng.Intn(10)), Y: float64(initialY)}, // Cast ints to float64
-			Velocity:        m.rng.Float64()*1.5 + 0.5,                                  // Random speed (0.5 to 2.0 cells/tick)
+			VelocityX:       m.rng.Float64()*1.5 + 0.5,                                  // Random horizontal speed (0.5 to 2.0 cells/tick)
+			VelocityY:       (m.rng.Float64() - 0.5) * 0.2,                              // Small random vertical drift (-0.1 to +0.1 cells/tick)
 			ArtFrames:       art,
 			CurrentFrameIdx: 0,
 			// Assign same random color for light/dark themes for simplicity
@@ -126,7 +127,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Calculate new position (simple linear movement for now)
 			// Using float for position internally might be smoother, but int for rendering
 			// Position is already float64, just add velocity
-			m.runners[i].Pos.X += m.runners[i].Velocity
+			m.runners[i].Pos.X += m.runners[i].VelocityX
+			m.runners[i].Pos.Y += m.runners[i].VelocityY
 
 			// Update animation frame
 			m.runners[i].CurrentFrameIdx = (m.runners[i].CurrentFrameIdx + 1) % len(m.runners[i].ArtFrames)
@@ -139,6 +141,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Cast termWidth and artWidth for comparison and assignment
 			if m.runners[i].Pos.X > float64(m.termWidth) {
 				m.runners[i].Pos.X = float64(-artWidth) // Reset position off-screen left
+			}
+
+			// Boundary check for Y (bounce off top/bottom)
+			artHeight := 0
+			if len(m.runners[i].ArtFrames[m.runners[i].CurrentFrameIdx]) > 0 {
+				artHeight = len(m.runners[i].ArtFrames[m.runners[i].CurrentFrameIdx])
+			}
+			if m.runners[i].Pos.Y < 0 {
+				m.runners[i].Pos.Y = 0
+				m.runners[i].VelocityY *= -1 // Reverse vertical direction
+			} else if m.runners[i].Pos.Y+float64(artHeight) > float64(m.termHeight) {
+				m.runners[i].Pos.Y = float64(m.termHeight - artHeight)
+				if m.runners[i].Pos.Y < 0 { // Prevent getting stuck if art is taller than screen
+					m.runners[i].Pos.Y = 0
+				}
+				m.runners[i].VelocityY *= -1 // Reverse vertical direction
 			}
 		}
 		return m, tickCmd() // Schedule next tick
