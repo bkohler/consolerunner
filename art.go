@@ -1,5 +1,16 @@
 package main
 
+// --- Background Art Placeholders ---
+
+const (
+	sunArt           = " O "
+	mountainArtLine1 = " /\\\\ " // Escaped backslash
+	mountainArtLine2 = "/  \\\\" // Escaped backslash
+	birdArt          = "v"
+)
+
+// --- Runner Art Placeholders ---
+
 // Placeholder ASCII art frames for different runner types.
 // Each runner type has a slice of frames (for animation).
 // Each frame is a slice of strings (representing lines of the art).

@@ -195,7 +195,56 @@ func (m model) View() string {
 			buffer[y][x] = StyledCell{Char: ' ', Style: defaultStyle}
 		}
 	}
+	// 2. Draw static background elements
+	// Sun (top-right)
+	sunStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("226")) // Yellow
+	sunX := m.termWidth - lipgloss.Width(sunArt) - 2                  // Position from right edge
+	sunY := 1                                                         // Position from top edge
+	if sunY >= 0 && sunY < m.termHeight {
+		for i, char := range sunArt {
+			drawX := sunX + i
+			if drawX >= 0 && drawX < m.termWidth {
+				buffer[sunY][drawX] = StyledCell{Char: char, Style: sunStyle}
+			}
+		}
+	}
 
+	// Mountains (bottom) - Simple repeating pattern
+	mountainStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")) // Gray
+	mountainY1 := m.termHeight - 2
+	mountainY2 := m.termHeight - 1
+	if mountainY1 >= 0 && mountainY2 >= 0 { // Ensure mountains are within bounds
+		for x := 0; x < m.termWidth; {
+			// Draw first line of mountain
+			for i, char := range mountainArtLine1 {
+				drawX := x + i
+				if drawX < m.termWidth {
+					buffer[mountainY1][drawX] = StyledCell{Char: char, Style: mountainStyle}
+				}
+			}
+			// Draw second line of mountain
+			for i, char := range mountainArtLine2 {
+				drawX := x + i
+				if drawX < m.termWidth {
+					buffer[mountainY2][drawX] = StyledCell{Char: char, Style: mountainStyle}
+				}
+			}
+			x += lipgloss.Width(mountainArtLine1) // Move to next mountain position
+		}
+	}
+
+	// Birds (scattered - very basic)
+	birdStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("250")) // Light gray
+	birdPositions := []Position{{X: float64(m.termWidth / 4), Y: 3}, {X: float64(m.termWidth / 2), Y: 5}, {X: float64(m.termWidth * 3 / 4), Y: 2}}
+	for _, pos := range birdPositions {
+		drawX := int(pos.X)
+		drawY := int(pos.Y)
+		if drawY >= 0 && drawY < m.termHeight && drawX >= 0 && drawX < m.termWidth {
+			buffer[drawY][drawX] = StyledCell{Char: []rune(birdArt)[0], Style: birdStyle}
+		}
+	}
+
+	// 3. Draw each runner onto the buffer (over the background), storing style
 	// 2. Draw each runner onto the buffer, storing style
 	for _, r := range m.runners {
 		frame := r.ArtFrames[r.CurrentFrameIdx]
