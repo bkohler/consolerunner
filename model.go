@@ -158,31 +158,75 @@ func (m model) View() string {
 		return "Initializing or terminal size too small..."
 	}
 
-	// --- Using a simpler View that just prints runners sequentially ---
-	// This won't look like they are running across the screen correctly,
-	// but avoids complex buffer logic for now. A proper implementation
-	// would use a cell buffer or more advanced lipgloss techniques.
-	var simpleView strings.Builder
-	simpleView.WriteString(fmt.Sprintf("Console Runners! (%d runners) Press 'q' to quit.\n", len(m.runners)))
-	simpleView.WriteString(fmt.Sprintf("Term size: %d x %d\n", m.termWidth, m.termHeight))
-	simpleView.WriteString(strings.Repeat("-", m.termWidth) + "\n") // Separator line
+	// --- View implementation using a styled screen buffer ---
 
+	// Helper struct to hold character and its style
+	type StyledCell struct {
+		Char  rune
+		Style lipgloss.Style
+	}
+
+	// 1. Create the buffer (2D slice of StyledCell)
+	defaultStyle := lipgloss.NewStyle() // Default style for empty cells
+	buffer := make([][]StyledCell, m.termHeight)
+	for y := 0; y < m.termHeight; y++ {
+		buffer[y] = make([]StyledCell, m.termWidth)
+		for x := 0; x < m.termWidth; x++ {
+			buffer[y][x] = StyledCell{Char: ' ', Style: defaultStyle}
+		}
+	}
+
+	// 2. Draw each runner onto the buffer, storing style
 	for _, r := range m.runners {
 		frame := r.ArtFrames[r.CurrentFrameIdx]
-		// Use the AdaptiveColor strings directly
-		style := lipgloss.NewStyle().Foreground(lipgloss.Color(r.Color.Light))
+		// Determine the correct style based on theme
+		runnerColor := r.Color.Light
 		if lipgloss.HasDarkBackground() {
-			style = lipgloss.NewStyle().Foreground(lipgloss.Color(r.Color.Dark))
+			runnerColor = r.Color.Dark
 		}
+		style := lipgloss.NewStyle().Foreground(lipgloss.Color(runnerColor))
 
-		simpleView.WriteString(fmt.Sprintf("Runner %d (%s) at (%d, %d) V:%.1f\n", r.ID, r.Type, r.Pos.X, r.Pos.Y, r.Velocity))
-		for _, line := range frame {
-			// Basic rendering - does not handle positioning on screen
-			simpleView.WriteString(style.Render(line) + "\n")
+		for lineIdx, lineStr := range frame {
+			targetY := r.Pos.Y + lineIdx
+			if targetY < 0 || targetY >= m.termHeight {
+				continue // Skip lines outside vertical bounds
+			}
+
+			currentXOffset := 0
+			for _, char := range lineStr {
+				charWidth := lipgloss.Width(string(char))
+				targetX := r.Pos.X + currentXOffset
+
+				for i := 0; i < charWidth; i++ {
+					drawX := targetX + i
+					if drawX >= 0 && drawX < m.termWidth {
+						cellChar := ' ' // Default for multi-width cells
+						if i == 0 {
+							cellChar = char
+						}
+						// Store character and its style
+						buffer[targetY][drawX] = StyledCell{Char: cellChar, Style: style}
+					}
+				}
+				currentXOffset += charWidth
+			}
 		}
-		simpleView.WriteString(strings.Repeat("-", m.termWidth) + "\n") // Separator line
 	}
-	return simpleView.String() // Return the simple sequential view for now.
+
+	// 3. Convert buffer to a single string, applying styles
+	var finalView strings.Builder
+	for y := 0; y < m.termHeight; y++ {
+		for x := 0; x < m.termWidth; x++ {
+			cell := buffer[y][x]
+			finalView.WriteString(cell.Style.Render(string(cell.Char)))
+		}
+		// Add newline unless it's the last line
+		if y < m.termHeight-1 {
+			finalView.WriteString("\n")
+		}
+	}
+
+	return finalView.String()
 
 }
 
