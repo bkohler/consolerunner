@@ -1,0 +1,17 @@
+# Binaries
+consolerunner
+main
+
+# Swap files
+*.swp
+.*.swp
+
+# Mise config
+mise.toml
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Go build cache
+/vendor/
