@@ -9,9 +9,15 @@ main
 # Mise config
 mise.toml
 
+# Environment variables
+.env
+
 # OS generated files
 .DS_Store
 Thumbs.db
 
 # Go build cache
 /vendor/
+
+# Log files
+*.log
