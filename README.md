@@ -14,7 +14,8 @@ A fun Go application that displays various types of runners animating across you
 
 ### Prerequisites
 
-*   Go (version 1.21 or later recommended)
+*   Go (version 1.21 or later recommended).
+*   Optional: `mise` for managing Go and tool versions (as used during development).
 
 ### Installation & Running
 
@@ -24,17 +25,22 @@ A fun Go application that displays various types of runners animating across you
     # cd consolerunner
     ```
 
-2.  **Build the application:**
+2.  **Ensure Go tools are available:**
+    *   If using `mise`, it might handle Go installation.
+    *   Install `goimports` if needed: `go install golang.org/x/tools/cmd/goimports@latest`
+    *   Install `golangci-lint` if needed (e.g., using `mise`): `mise use golangci-lint@latest`
+
+3.  **Build the application:**
     ```bash
     go build
     ```
 
-3.  **Run the executable:**
+4.  **Run the executable:**
     ```bash
     ./consolerunner
     ```
 
-4.  **Quit:** Press `q` or `Ctrl+C` to exit the application.
+5.  **Quit:** Press `q` or `Ctrl+C` to exit the application.
 
 ## ASCII Art
 
@@ -43,6 +49,18 @@ The ASCII art for the different runner types is defined in `art.go`. The current
 ## Development
 
 *   **Dependencies:** Managed using Go modules (`go.mod`, `go.sum`).
-*   **Linting:** Configured with `.golangci.yml`. Run `golangci-lint run ./...`
-*   **Formatting:** Use `goimports` or `gofmt`.
-*   **Testing:** Run tests with `go test ./...`
+*   **Testing:** Run the unit tests using the standard Go command:
+    ```bash
+    go test ./...
+    ```
+*   **Formatting:** Use `goimports` (install if needed, see Prerequisites) to format code and manage imports:
+    ```bash
+    goimports -w .
+    ```
+    Alternatively, use the standard `gofmt`:
+    ```bash
+    gofmt -w .
+    ```
+*   **Linting:** Uses `golangci-lint` with its default settings (no `.golangci.yml` file is present). Install if needed (see Prerequisites) and run:
+    ```bash
+    golangci-lint run ./...
