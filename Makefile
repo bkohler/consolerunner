@@ -1,3 +1,4 @@
+.ONESHELL:
 # Go parameters
 GOCMD=go
 GOBUILD=$(GOCMD) build
@@ -62,29 +63,30 @@ install-tools:
 # Create and publish a new release
 release:
 	@echo "Creating new release..."
-	@LATEST_TAG=$$(gh release list --limit 1 --json tagName -q '.[0].tagName' || echo "v0.0.0")
-	@echo "Latest tag: $${LATEST_TAG}"
-	@# Increment version (simple increment of the middle number, assumes vX.Y.Z format)
-	@NEXT_VERSION=$$(echo $${LATEST_TAG} | awk -F. '{printf "v%d.%d.%d", $$1, $$2+1, $$3}')
-	@echo "Next version: $${NEXT_VERSION}"
-	@# Define binary names
-	@LINUX_BINARY=$(BINARY_NAME)-linux-amd64
-	@WINDOWS_BINARY=$(BINARY_NAME)-windows-amd64.exe
-	@CHECKSUM_FILE=checksums.txt
-	@# Build binaries
-	@echo "Building binaries..."
-	GOOS=linux GOARCH=amd64 $(GOBUILD) -o $${LINUX_BINARY} .
-	GOOS=windows GOARCH=amd64 $(GOBUILD) -o $${WINDOWS_BINARY} .
-	@# Generate checksums
-	@echo "Generating checksums..."
-	sha256sum $${LINUX_BINARY} $${WINDOWS_BINARY} > $${CHECKSUM_FILE}
-	@# Create GitHub release
-	@echo "Creating GitHub release $${NEXT_VERSION}..."
-	gh release create $${NEXT_VERSION} --generate-notes
-	@# Upload assets
-	@echo "Uploading assets..."
-	gh release upload $${NEXT_VERSION} $${LINUX_BINARY} $${WINDOWS_BINARY} $${CHECKSUM_FILE}
-	@# Clean up local files
-	@echo "Cleaning up..."
-	rm $${LINUX_BINARY} $${WINDOWS_BINARY} $${CHECKSUM_FILE}
-	@echo "Release $${NEXT_VERSION} created successfully."
+	LATEST_TAG=$$(gh release list --limit 1 --json tagName -q '.[0].tagName' || echo "v0.0.0")
+	echo "Latest tag: $$LATEST_TAG"
+	# Increment version (simple increment of the middle number, assumes vX.Y.Z format)
+	# Strip 'v' prefix for awk, then add it back
+	NEXT_VERSION=$$(echo $$LATEST_TAG | sed 's/^v//' | awk -F. '{printf "v%d.%d.%d", $$1, $$2+1, $$3}')
+	echo "Next version: $$NEXT_VERSION"
+	# Define binary names using the Makefile variable
+	LINUX_BINARY="$(BINARY_NAME)-linux-amd64"
+	WINDOWS_BINARY="$(BINARY_NAME)-windows-amd64.exe"
+	CHECKSUM_FILE="checksums.txt"
+	# Build binaries
+	echo "Building binaries..."
+	GOOS=linux GOARCH=amd64 $(GOBUILD) -o "$$LINUX_BINARY" .
+	GOOS=windows GOARCH=amd64 $(GOBUILD) -o "$$WINDOWS_BINARY" .
+	# Generate checksums
+	echo "Generating checksums..."
+	sha256sum "$$LINUX_BINARY" "$$WINDOWS_BINARY" > "$$CHECKSUM_FILE"
+	# Create GitHub release
+	echo "Creating GitHub release $$NEXT_VERSION..."
+	gh release create "$$NEXT_VERSION" --generate-notes
+	# Upload assets
+	echo "Uploading assets..."
+	gh release upload "$$NEXT_VERSION" "$$LINUX_BINARY" "$$WINDOWS_BINARY" "$$CHECKSUM_FILE"
+	# Clean up local files
+	echo "Cleaning up..."
+	rm "$$LINUX_BINARY" "$$WINDOWS_BINARY" "$$CHECKSUM_FILE"
+	echo "Release $$NEXT_VERSION created successfully."
